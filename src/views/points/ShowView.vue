@@ -38,6 +38,10 @@
 
       </div>
     </div>
+
+    <div class="mt-4">
+      <ListEventsPoint :point="point" />
+    </div>
   </div>
 
 </template>
@@ -50,6 +54,7 @@ import { toast } from 'vue3-toastify'
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import { useRoute, useRouter } from "vue-router";
 import DeleteButton from "@/components/DeleteButton.vue";
+import ListEventsPoint from "@/components/points/ListEventsPoint.vue";
 
 export default defineComponent({
 
@@ -57,7 +62,8 @@ export default defineComponent({
 
   components: {
     LoadingSpinner,
-    DeleteButton
+    DeleteButton,
+    ListEventsPoint
   },
 
   setup() {
