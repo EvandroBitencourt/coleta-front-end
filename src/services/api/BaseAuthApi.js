@@ -1,8 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from "./config";
-import { useRouter } from "vue-router"; //usaremos no interceptor
 
-class BaseApi {
+class BaseAuthApi {
    constructor(){
      this.axiosInstance = axios.create({
         baseURL:BASE_URL,
@@ -35,4 +34,4 @@ class BaseApi {
     }
 }
 
-export default BaseApi // exportamos a classe para uso externo
+export default BaseAuthApi // exportamos a classe para uso externo

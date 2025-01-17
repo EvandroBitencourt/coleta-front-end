@@ -2,9 +2,9 @@
     <div class="container-fluid mt-2 mb-4">
         <div class="card shadow-lg">
             <div class="card-header">
-                <h4>Nova rota de coleta</h4>
-                <RouterLink class="btn btn-outline-secondary float-start" to="/routes">
-                    <i class="bi bi-arrow-left"></i>&nbsp;Listar rotas de coleta
+                <h4>Editar solicitação de coleta</h4>
+                <RouterLink class="btn btn-outline-secondary float-start" to="/collection-requests">
+                    <i class="bi bi-arrow-left"></i>&nbsp;Listar minhas solicitações
                 </RouterLink>
             </div>
             <div class="card-body">
@@ -13,8 +13,8 @@
 
                 <ValidationErrorsView :errors="validationErrors" />
 
-                <form @submit.prevent="createRoute">
-                    <RouteFormInputs :companyRoute="companyRoute" :companiesOptions="companiesOptions" />
+                <form @submit.prevent="updateCollectionRequest">
+                    <CollectionFormInputs :collectionRequest="collectionRequest" :wasteOptions="wasteOptions" />
 
                     <button type="submit" class="btn btn-success mt-3">
                         <i class="bi bi-floppy"></i>&nbsp;Salvar
@@ -28,22 +28,22 @@
 
 <script>
 import { RouterLink } from "vue-router";
-import CompaniesApi from "@/services/api/CompaniesApi";
-import RoutesApi from "@/services/api/RoutesApi";
+import UserCollectionsRequestsApi from "@/services/api/UserCollectionsRequestsApi";
+import WasteTypesApi from "@/services/api/WasteTypesApi";
 import { defineComponent, ref, onMounted } from "vue";
 import { toast } from 'vue3-toastify'
 import { useRoute, useRouter } from "vue-router";
-import RouteFormInputs from "@/components/routes/RouteFormInputs.vue";
+import CollectionFormInputs from "@/components/collection-requests/CollectionFormInputs.vue";
 import ValidationErrorsView from "@/components/ValidationErrors.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 
 
 export default defineComponent({
 
-    name: 'CreateView',
+    name: 'EditView',
 
     components: {
-        RouteFormInputs,
+        CollectionFormInputs,
         ValidationErrorsView,
         LoadingSpinner
     },
@@ -54,24 +54,24 @@ export default defineComponent({
 
         const isLoading = ref(true)
 
-        const companyRoute = ref({
-            name: '',
-            company_id: '',
-            description: '',
+        const collectionRequest = ref({
+            waste_type_id: '',
+            quantity: '',
+            preferred_date: '',
+            address: '',
+
         })
 
-        const companiesOptions = ref([])
 
+        const wasteOptions = ref([])
         const validationErrors = ref([])
 
-        const createRoute = async () => {
+        const updateCollectionRequest = async () => {
             try {
                 validationErrors.value = [];
-                const api = new RoutesApi();
+                const api = new UserCollectionsRequestsApi();
 
-                console.log("Dados enviados para a API:", companyRoute.value); // Adicione isso para verificar os dados
-
-                await api.create(companyRoute.value);
+                await api.update(route.params.id, collectionRequest.value);
 
                 toast.success(`Sucesso!`, {
                     'theme': 'colored',
@@ -79,11 +79,13 @@ export default defineComponent({
                 });
 
                 setTimeout(() => {
-                    router.push(`/routes`);
+                    router.push(`/collection-requests`);
 
                 }, 1000);
             } catch (error) {
-                // Tratar erros
+
+                console.log(`Erro ao enviar os dados:`, error.response?.data || error);
+
                 if (error.response?.status === 400 && error.response.data.messages) {
                     validationErrors.value = Object.values(error.response.data.messages);
                     return;
@@ -94,36 +96,66 @@ export default defineComponent({
                     hideProgressBar: true
                 });
 
-                console.log(`Erro ao enviar os dados:`, error.response?.data || error);
+           
             }
         };
 
-
-        const fetchCompanies = async () => {
+        const fetchCollectionRequests = async () => {
             try {
-                const api = new CompaniesApi()
-                const data = await api.list()
-                companiesOptions.value = data
+                const api = new UserCollectionsRequestsApi()
+
+                //aqui chamamos o metodo get() da classe BaseApi que recebe a URL
+                const data = await api.get(`/collection-requests/${route.params.id}`)
+                collectionRequest.value = data
 
                 isLoading.value = false
 
             } catch (error) {
+
+                console.log(`Erro ao recuperar os registros: ${error}`)
+
                 if (error.response && error.response.status != 401) {
                     toast.error(`Erro ao recuperar os registros: ${error}`, {
                         'theme': 'colored',
                         hideProgressBar: true
                     })
                 }
-                console.log(`Erro ao recuperar os registros: ${error}`)
+                
             }
         }
 
-        onMounted(fetchCompanies)
+
+        const fetchWasteTypes = async () => {
+            try {
+                const api = new WasteTypesApi()
+                const data = await api.list()
+                wasteOptions.value = data
+
+                isLoading.value = false
+
+            } catch (error) {
+
+                console.log(`Erro ao recuperar os registros: ${error}`)
+
+                if (error.response && error.response.status != 401) {
+                    toast.error(`Erro ao recuperar os registros: ${error}`, {
+                        'theme': 'colored',
+                        hideProgressBar: true
+                    })
+                }
+                
+            }
+        }
+
+        onMounted(() => {
+            fetchWasteTypes(),
+            fetchCollectionRequests()
+        })
 
         return {
-            companyRoute,
-            companiesOptions,
-            createRoute,
+            collectionRequest,
+            wasteOptions,
+            updateCollectionRequest,
             validationErrors,
             isLoading
         }
